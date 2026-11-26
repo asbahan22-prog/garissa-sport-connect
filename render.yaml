@@ -1,8 +1,22 @@
 services:
   - type: web
     name: garissa-sport-connect
+    runtime: static
+    buildCommand: npm install --prefix client && npm run build --prefix client
+    staticPublishPath: client/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://garissa-sport-connect-api.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  - type: web
+    name: garissa-sport-connect-api
     runtime: node
-    buildCommand: npm install && npm install --prefix server && npm install --prefix client && npm run build --prefix client
+    rootDir: server
+    buildCommand: npm install
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -14,7 +28,7 @@ services:
       - key: CLIENT_URL
         value: https://garissa-sport-connect.onrender.com
       - key: SERVER_URL
-        value: https://garissa-sport-connect.onrender.com
+        value: https://garissa-sport-connect-api.onrender.com
       - key: AUTO_SEED
         value: "false"
       - key: CLOUDINARY_CLOUD_NAME

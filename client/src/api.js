@@ -1,12 +1,11 @@
 import axios from 'axios';
 
+const HOSTED_SITE = 'garissa-sport-connect.onrender.com';
 const HOSTED_API = 'https://garissa-sport-connect-api.onrender.com/api';
 
 function apiBase() {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  if (typeof window !== 'undefined' && window.location.hostname === 'garissa-sport-connect.onrender.com') {
-    return HOSTED_API;
-  }
+  if (typeof window !== 'undefined' && window.location.hostname === HOSTED_SITE) return HOSTED_API;
   return '/api';
 }
 
