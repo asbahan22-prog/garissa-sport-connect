@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import express from 'express';
 import cors from 'cors';
@@ -25,15 +26,29 @@ dotenv.config({ path: path.join(serverRoot, '.env') });
 
 export const app = express();
 
-const allowed = (process.env.CLIENT_URL || 'http://localhost:5173')
-  .split(',')
-  .map((item) => item.trim())
-  .filter(Boolean);
+const allowed = new Set(
+  `${process.env.CLIENT_URL || 'http://localhost:5173'},https://garissa-sport-connect.onrender.com`
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+);
 
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'"],
+    },
+  },
+}));
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowed.includes(origin) || process.env.NODE_ENV !== 'production') return callback(null, true);
+    if (!origin || allowed.has(origin) || process.env.NODE_ENV !== 'production') return callback(null, true);
     return callback(new Error('Origin not allowed'));
   },
   credentials: true,
@@ -63,6 +78,15 @@ app.use('/api/admin', adminRoutes);
 app.use('/api', (_req, res) => {
   res.status(404).json({ success: false, message: 'API route not found.' });
 });
+
+const clientDist = path.resolve(serverRoot, '../client/dist');
+if (fs.existsSync(path.join(clientDist, 'index.html'))) {
+  app.use(express.static(clientDist));
+  app.get(/^\/(?!api(?:\/|$)|uploads(?:\/|$)).*/, (_req, res) => {
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
+
 app.use(errorHandler);
 
 export async function start() {
