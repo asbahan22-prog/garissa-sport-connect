@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Garissa SportsConnect — presentation</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", sans-serif; background: #06261d; color: #f3eee4; }
+    .slide { display: none; min-height: 100vh; padding: 8vh 10vw; }
+    .slide.active { display: flex; flex-direction: column; justify-content: center; }
+    h1 { font-size: clamp(2.4rem, 6vw, 4.6rem); line-height: 1.05; margin: 0 0 1rem; max-width: 16ch; }
+    h2 { font-size: clamp(2rem, 4vw, 3.2rem); margin: 0 0 1rem; }
+    p, li { font-size: 1.25rem; line-height: 1.5; max-width: 42rem; }
+    .eyebrow { letter-spacing: 0.16em; text-transform: uppercase; color: #c8922a; font-weight: 700; font-size: 0.85rem; }
+    ol { padding-left: 1.2rem; }
+    .nav { position: fixed; right: 1.5rem; bottom: 1.2rem; color: #f3eee4aa; font-size: 0.9rem; }
+    button { position: fixed; top: 1rem; background: transparent; color: inherit; border: 1px solid #f3eee455; border-radius: 999px; padding: 0.4rem 0.8rem; }
+    .prev { left: 1rem; } .next { right: 1rem; }
+  </style>
+</head>
+<body>
+  <button class="prev" type="button" id="prev">Back</button>
+  <button class="next" type="button" id="next">Next</button>
+  <section class="slide active">
+    <p class="eyebrow">Garissa County</p>
+    <h1>Garissa SportsConnect</h1>
+    <p>Connecting talent. Empowering athletes. Transforming sports.</p>
+  </section>
+  <section class="slide">
+    <h2>The problem</h2>
+    <p>Players, fixtures, and trials in Garissa are scattered across notebooks and chats. A good athlete can be invisible to a coach one sub-county away, and an under-18 player has no consistent privacy boundary.</p>
+  </section>
+  <section class="slide">
+    <h2>Who it is for</h2>
+    <ul>
+      <li>Athletes building a record and applying for trials</li>
+      <li>Coaches running squads, training, and attendance</li>
+      <li>Scouts searching and shortlisting talent</li>
+      <li>Club admins registering organizations and teams</li>
+      <li>Organizers publishing fixtures and results</li>
+      <li>A super admin verifying clubs and moderating the platform</li>
+    </ul>
+  </section>
+  <section class="slide">
+    <h2>What the first release does</h2>
+    <p>Accounts and role dashboards, athlete profiles, clubs and teams, a county league with automatic standings, discovery, opportunities and applications, performance charts, notifications, and an admin queue. Records persist in MongoDB.</p>
+  </section>
+  <section class="slide">
+    <h2>How it is built</h2>
+    <p>React and Tailwind on the front. Node, Express, and MongoDB on the back. JWT and bcrypt protect accounts. Recharts draws the tables and charts. Cloudinary is optional for photos. Render and Vercel are the hosting targets.</p>
+  </section>
+  <section class="slide">
+    <h2>Safeguarding</h2>
+    <p>Athletes under 18 need guardian consent. They stay out of the public directory. Scouts do not see their phone, photos, or measurements. Coaches of that squad can see guardian contact. Accounts can be reported and suspended.</p>
+  </section>
+  <section class="slide">
+    <h2>Live path</h2>
+    <ol>
+      <li>Home table: Garissa United lead the county league.</li>
+      <li>Amina’s profile, application, and goals chart.</li>
+      <li>Coach attendance for Garissa United.</li>
+      <li>Scout shortlist, including an under-18 warning.</li>
+      <li>Organizer saves a score and the table moves.</li>
+      <li>Admin verifies Fafi Netball Club.</li>
+    </ol>
+  </section>
+  <section class="slide">
+    <h2>Next</h2>
+    <p>SMS alerts for low-data users, official federation verification, video evidence, and event fees. The same records can then serve more sports and more counties without changing the core.</p>
+  </section>
+  <p class="nav" id="count"></p>
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    let index = 0;
+    function show(next) {
+      index = (next + slides.length) % slides.length;
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+      document.getElementById('count').textContent = (index + 1) + ' / ' + slides.length;
+    }
+    document.getElementById('next').onclick = () => show(index + 1);
+    document.getElementById('prev').onclick = () => show(index - 1);
+    window.onkeydown = (event) => {
+      if (event.key === 'ArrowRight' || event.key === ' ') show(index + 1);
+      if (event.key === 'ArrowLeft') show(index - 1);
+    };
+    show(0);
+  </script>
+</body>
+</html>
