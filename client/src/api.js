@@ -1,6 +1,16 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' });
+const HOSTED_API = 'https://garissa-sport-connect-api.onrender.com/api';
+
+function apiBase() {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (typeof window !== 'undefined' && window.location.hostname === 'garissa-sport-connect.onrender.com') {
+    return HOSTED_API;
+  }
+  return '/api';
+}
+
+const api = axios.create({ baseURL: apiBase() });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('gsc_token');
