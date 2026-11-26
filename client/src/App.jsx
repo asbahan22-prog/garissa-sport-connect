@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { ROLE_HOME, useAuth } from './auth';
+import { ROLE_HOME, canOpen, useAuth } from './auth';
 import { DashboardLayout, PublicLayout } from './layouts';
 import { Spinner } from './ui';
 import { ForgotPage, LoginPage, RegisterPage, ResetPage } from './pages/AuthPages';
@@ -14,9 +14,12 @@ import { ClubHome, CoachHome, ManageTournament, OpportunityAdmin, OrganizerHome,
 function Protected({ roles, children }) {
   const { user, loading } = useAuth();
   const location = useLocation();
-  if (loading) return <div className="grid min-h-screen place-items-center"><Spinner label="Opening your session" /></div>;
-  if (!user) return <Navigate to="/login" replace state={{ from: location }} />;
-  if (roles && !roles.includes(user.role)) return <Navigate to="/app" replace />;
+  if (loading) return <div className="grid min-h-screen place-items-center"><Spinner label="Checking your session" /></div>;
+  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  const allowedRole = !roles || roles.includes(user.role);
+  if (!allowedRole || !canOpen(user.role, location.pathname)) {
+    return <Navigate to={ROLE_HOME[user.role] || '/'} replace />;
+  }
   return children;
 }
 
@@ -55,7 +58,7 @@ export default function App() {
         <Route path="athlete/applications" element={<Protected roles={['athlete']}><ApplicationsPage /></Protected>} />
         <Route path="athlete/performance" element={<Protected roles={['athlete']}><PerformancePage /></Protected>} />
         <Route path="coach" element={<Protected roles={['coach', 'super_admin']}><CoachHome /></Protected>} />
-        <Route path="teams/:id" element={<TeamPage />} />
+        <Route path="teams/:id" element={<Protected roles={['athlete', 'coach', 'club_admin', 'super_admin']}><TeamPage /></Protected>} />
         <Route path="scout" element={<Protected roles={['scout', 'super_admin']}><ScoutHome /></Protected>} />
         <Route path="scout/shortlist" element={<Protected roles={['scout', 'super_admin']}><ShortlistPage /></Protected>} />
         <Route path="club" element={<Protected roles={['club_admin', 'super_admin']}><ClubHome /></Protected>} />

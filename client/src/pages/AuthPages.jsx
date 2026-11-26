@@ -1,26 +1,31 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import api, { errorMessage } from '../api';
-import { ROLE_HOME, useAuth } from '../auth';
-import { DEMO_ACCOUNTS, DEMO_PASSWORD, ROLES, SUB_COUNTIES } from '../data';
-import { Alert, Button, Card, Field, Input, Select, useTitle } from '../ui';
+import { ROLE_HOME, canOpen, useAuth } from '../auth';
+import { ROLES, SUB_COUNTIES } from '../data';
+import { Alert, Button, Card, Field, Input, PasswordInput, Select, useTitle } from '../ui';
 
 export function LoginPage() {
   useTitle('Log in');
-  const { login } = useAuth();
+  const { user, loading, login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const requested = location.state?.from;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+
+  if (!loading && user) return <Navigate to={ROLE_HOME[user.role] || '/'} replace />;
 
   async function submit(event) {
     event.preventDefault();
     setBusy(true);
     setError('');
     try {
-      const user = await login(email, password);
-      navigate(ROLE_HOME[user.role] || '/');
+      const signedIn = await login(email, password);
+      const destination = requested && canOpen(signedIn.role, requested) ? requested : (ROLE_HOME[signedIn.role] || '/');
+      navigate(destination, { replace: true });
     } catch (err) {
       setError(errorMessage(err, 'Could not sign in.'));
     } finally {
@@ -28,50 +33,22 @@ export function LoginPage() {
     }
   }
 
-  async function demo(account) {
-    setEmail(account);
-    setPassword(DEMO_PASSWORD);
-    setBusy(true);
-    setError('');
-    try {
-      const user = await login(account, DEMO_PASSWORD);
-      navigate(ROLE_HOME[user.role] || '/');
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
-    <div className="mx-auto grid max-w-5xl gap-8 px-4 py-12 lg:grid-cols-[1.1fr_0.9fr]">
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-green">Welcome back</p>
-        <h1 className="mt-2 font-display text-5xl text-ink">Sign in to your dashboard</h1>
-        <p className="mt-4 max-w-md text-muted">Athletes, coaches, scouts, clubs, organizers, and administrators each land in their own workspace.</p>
-        <form onSubmit={submit} className="mt-8 max-w-md space-y-4">
-          {error ? <Alert>{error}</Alert> : null}
-          <Field label="Email"><Input type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} /></Field>
-          <Field label="Password"><Input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></Field>
-          <div className="flex items-center justify-between gap-3">
-            <Button type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Button>
-            <Link to="/forgot-password" className="text-sm font-semibold text-green">Forgot password</Link>
-          </div>
-        </form>
-        <p className="mt-6 text-sm">New here? <Link to="/register" className="font-semibold text-green">Create an account</Link></p>
-      </div>
-      <Card>
-        <h2 className="font-display text-2xl">Demo accounts</h2>
-        <p className="mt-2 text-sm text-muted">Every demo account uses the password <span className="font-semibold text-ink">{DEMO_PASSWORD}</span>.</p>
-        <div className="mt-4 grid gap-2">
-          {DEMO_ACCOUNTS.map(([label, account]) => (
-            <button key={account} type="button" className="flex items-center justify-between rounded-2xl border border-line px-3 py-3 text-left text-sm hover:border-green" onClick={() => demo(account)}>
-              <span className="font-semibold">{label}</span>
-              <span className="text-muted">{account}</span>
-            </button>
-          ))}
+    <div className="mx-auto max-w-md px-4 py-12">
+      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-green">Welcome back</p>
+      <h1 className="mt-2 font-display text-5xl text-ink">Sign in to your dashboard</h1>
+      <p className="mt-4 text-muted">Athletes, coaches, scouts, clubs, organizers, and administrators each land in their own workspace.</p>
+      <form onSubmit={submit} className="mt-8 space-y-4">
+        {requested ? <Alert tone="green">Sign in to open your dashboard.</Alert> : null}
+        {error ? <Alert>{error}</Alert> : null}
+        <Field label="Email"><Input type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} /></Field>
+        <Field label="Password"><PasswordInput autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></Field>
+        <div className="flex items-center justify-between gap-3">
+          <Button type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Button>
+          <Link to="/forgot-password" className="text-sm font-semibold text-green">Forgot password</Link>
         </div>
-      </Card>
+      </form>
+      <p className="mt-6 text-sm">New here? <Link to="/register" className="font-semibold text-green">Create an account</Link></p>
     </div>
   );
 }
@@ -141,7 +118,7 @@ export function RegisterPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Full name"><Input required value={form.name} onChange={(event) => set('name', event.target.value)} /></Field>
           <Field label="Email"><Input type="email" required value={form.email} onChange={(event) => set('email', event.target.value)} /></Field>
-          <Field label="Password" hint="At least 8 characters."><Input type="password" minLength={8} required value={form.password} onChange={(event) => set('password', event.target.value)} /></Field>
+          <Field label="Password" hint="At least 8 characters."><PasswordInput minLength={8} autoComplete="new-password" required value={form.password} onChange={(event) => set('password', event.target.value)} /></Field>
           <Field label="Phone"><Input value={form.phone} onChange={(event) => set('phone', event.target.value)} /></Field>
           <Field label="Sub-county">
             <Select value={form.subCounty} onChange={(event) => set('subCounty', event.target.value)}>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import api from './api';
 import { useAuth } from './auth';
 import { roleLabel } from './data';
@@ -110,6 +110,7 @@ export function PublicLayout() {
 
 export function DashboardLayout() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const location = useLocation();
@@ -135,7 +136,7 @@ export function DashboardLayout() {
         </nav>
         <div className="mt-auto space-y-2 pt-6">
           <Link to="/athletes" className="block rounded-2xl px-3 py-2 text-sm font-semibold text-sand/80 hover:bg-white/10" onClick={() => setOpen(false)}>Public site</Link>
-          <button type="button" className="w-full rounded-2xl px-3 py-2 text-left text-sm font-semibold text-sand/80 hover:bg-white/10" onClick={logout}>Log out</button>
+          <button type="button" className="w-full rounded-2xl px-3 py-2 text-left text-sm font-semibold text-sand/80 hover:bg-white/10" onClick={async () => { await logout(); navigate('/login', { replace: true }); }}>Log out</button>
         </div>
       </aside>
       <div className="min-w-0">

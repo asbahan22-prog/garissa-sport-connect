@@ -12,6 +12,21 @@ export const ROLE_HOME = {
   super_admin: '/app/admin',
 };
 
+const ROLE_PREFIXES = {
+  athlete: ['/app/athlete', '/app/teams'],
+  coach: ['/app/coach', '/app/teams'],
+  scout: ['/app/scout', '/app/organizer/opportunities', '/app/opportunities'],
+  club_admin: ['/app/club', '/app/teams', '/app/organizer/opportunities', '/app/opportunities'],
+  organizer: ['/app/organizer', '/app/tournaments', '/app/opportunities'],
+  super_admin: ['/app'],
+};
+
+export function canOpen(role, pathname) {
+  if (!role || !pathname?.startsWith('/app')) return false;
+  if (pathname === '/app' || pathname.startsWith('/app/account') || pathname.startsWith('/app/notifications')) return true;
+  return (ROLE_PREFIXES[role] || []).some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,9 +48,13 @@ export function AuthProvider({ children }) {
     loading,
     async login(email, password) {
       const res = await api.post('/auth/login', { email, password });
-      localStorage.setItem('gsc_token', res.data.data.token);
-      setUser(res.data.data.user);
-      return res.data.data.user;
+      const session = res.data?.data;
+      if (!session?.token || !session?.user) {
+        throw new Error('Sign in did not start a session. Try again.');
+      }
+      localStorage.setItem('gsc_token', session.token);
+      setUser(session.user);
+      return session.user;
     },
     async register(payload) {
       const res = await api.post('/auth/register', payload);
